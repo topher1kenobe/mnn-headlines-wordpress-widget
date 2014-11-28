@@ -1,10 +1,11 @@
 <?php
 /*
-Plugin Name: Mission Network News Dail Headlines Widget
+Plugin Name: Mission Network News Daily Headlines Widget
 Description: Creates a widget which shows the most recent daily news headlines from <a href="http://mnnonline.org">Mission Network News</a>.
 Author: Topher
 Author URI: http://topher1kenobe.com
 Version: 1.0
+Text Domain: mnn-headlines-widget
 License: GPL
 */
 
@@ -18,7 +19,7 @@ class MNN_Headlines_Widget extends WP_Widget {
 	 */
 	private $mnn_data_url = NULL;
 	private $mnn_data     = NULL;
-	private $old_vals    = array();
+	private $old_vals     = array();
 
 
 	/**
@@ -26,14 +27,14 @@ class MNN_Headlines_Widget extends WP_Widget {
 	 */
 	function __construct() {
 
-		$this->mnn_data_url = $this->domain . '/v1/people_groups/daily_unreached.json?api_key=' . $this->api_key;
+		$this->mnn_data_url = 'http://mnnonline.org/rss/daily.rss';
 
 		$this->data_fetcher();
 
 		parent::__construct(
-			'joshua-project-daily-unreached-widget', // Base ID
-			__( 'Joshua Project Daily Unreached', 'joshua-project-daily-unreached-widget' ), // Name
-			array( 'description' => __( 'Renders the Daily Unreached People Group from The Joshua Project.', 'joshua-project-daily-unreached-widget' ), )
+			'mnn-headlines-widget', // Base ID
+			__( 'MNN Daily Headlines', 'mnn-headlines-widget' ), // Name
+			array( 'description' => __( 'Renders the most recent daily news headlines from Mission Network News.', 'mnn-headlines-widget' ), )
 		);
 
 		add_action( 'wp_head', array( $this, 'widget_css' ) );
@@ -45,7 +46,7 @@ class MNN_Headlines_Widget extends WP_Widget {
 	 */
 	private function data_fetcher() {
 
-		$transient_name = 'mnn_daily_unreached_people';
+		$transient_name = 'mnn_reacent_headlines';
 
 		$remote_data = get_transient( $transient_name );
 
@@ -63,8 +64,6 @@ class MNN_Headlines_Widget extends WP_Widget {
 
 		$this->mnn_data = $remote_data_array[0];
 
-
-
 	}
 
 	/**
@@ -78,9 +77,10 @@ class MNN_Headlines_Widget extends WP_Widget {
 	public function widget( $args, $instance ) {
 
 		$title  = apply_filters( 'widget_title', $instance['title'] );
+
 		$output = '';
 
-		$output .= '<img src="' . esc_url( $this->mnn_data->PeopleGroupPhotoURL ) . '" />';
+		//$output .= '<img src="' . esc_url( $this->mnn_data->PeopleGroupPhotoURL ) . '" />';
 
 		$output  .= '<ul>' . "\n";
 			$output .= '<li class="image"><a href="' . esc_url( $this->mnn_data->PeopleGroupURL ) . '">' . $this->mnn_data->PeopNameInCountry . '</a>, in <a href="' . $this->mnn_data->CountryURL . '">' . $this->mnn_data->Ctry . '</a></li>';
@@ -114,8 +114,8 @@ class MNN_Headlines_Widget extends WP_Widget {
 
 			$output .= '<style type="text/css">' . "\n";
 
-				$output .= '.widget_joshua-project-daily-unreached-widget img { max-width: 100%; }' . "\n";
-				$output .= '.widget_joshua-project-daily-unreached-widget ul { list-style-type: none; border-bottom: 1px solid #ccc;}' . "\n";
+				$output .= '.widget_mnn-headlines-widget img { max-width: 100%; }' . "\n";
+				$output .= '.widget_mnn-headlines-widget ul { list-style-type: none; border-bottom: 1px solid #ccc;}' . "\n";
 
 			$output .= '</style>' . "\n";
 		}

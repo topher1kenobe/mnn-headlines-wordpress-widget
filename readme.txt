@@ -21,9 +21,7 @@ Creates a widget showing the most recent daily news headlines from Mission Netwo
 
 == Screenshots ==
 
-1.
-
-
+1. wut?
 == Usage ==
 
 Some basic CSS is included.  If you'd like to turn it off, drop this code into your theme functions.php file or a plugin of your choosing.

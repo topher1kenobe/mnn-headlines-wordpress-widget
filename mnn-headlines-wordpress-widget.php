@@ -10,6 +10,14 @@ License: GPL
 */
 
 /**
+ * Provides a WordPress widget that renders recent daily headline from Mission Network News
+ *
+ * @package MNN_Headlines_Widget
+ * @since MNN_Headlines_Widget 1.0
+ * @author Topher
+ */
+
+/**
  * Adds MNN_Headlines_Widget widget.
  */
 class MNN_Headlines_Widget extends WP_Widget {
@@ -17,27 +25,26 @@ class MNN_Headlines_Widget extends WP_Widget {
 	/**
 	 * Make some vars
 	 */
-	private $mnn_data_url = NULL;
-	private $mnn_data     = NULL;
-	private $old_vals     = array();
-
+	private $mnn_data_url  = NULL;
+	private $mnn_data	   = NULL;
 
 	/**
 	 * Register widget with WordPress.
 	 */
 	function __construct() {
 
-		$this->mnn_data_url = 'http://mnnonline.org/rss/daily.rss';
-
-		$this->data_fetcher();
-
+		//  Build out the widget details
 		parent::__construct(
-			'mnn-headlines-widget', // Base ID
-			__( 'MNN Daily Headlines', 'mnn-headlines-widget' ), // Name
+			'mnn-headlines-widget',
+			__( 'MNN Daily Headlines', 'mnn-headlines-widget' ),
 			array( 'description' => __( 'Renders the most recent daily news headlines from Mission Network News.', 'mnn-headlines-widget' ), )
 		);
 
-		add_action( 'wp_head', array( $this, 'widget_css' ) );
+		// assign the data source URL
+		$this->mnn_data_url = 'http://mnnonline.org/rss/daily.rss';
+
+		// go get the data and store it in $this->mnn_data
+		$this->data_fetcher();
 
 	}
 
@@ -46,24 +53,65 @@ class MNN_Headlines_Widget extends WP_Widget {
 	 */
 	private function data_fetcher() {
 
-		$transient_name = 'mnn_reacent_headlines';
+		$rss = fetch_feed( $this->mnn_data_url );
 
-		$remote_data = get_transient( $transient_name );
+		// Checks that the object is created correctly
+		if ( ! is_wp_error( $rss ) ) {
 
-		if ( $remote_data == '' ) {
+			// Figure out how many total items there are, but limit it to 5. 
+			$maxitems = $rss->get_item_quantity( 5 ); 
 
-			$get_data = wp_remote_get( esc_url( $this->mnn_data_url ) );
-
-			set_transient( $transient_name, $remote_data, 60 * 60 * 12 );
-
-			$remote_data = $get_data['body'];
+			// Build an array of all the items, starting with element 0 (first element).
+			$rss_items = $rss->get_items( 0, $maxitems );
 
 		}
 
-		$remote_data_array = json_decode( $remote_data );
+		// store the data in an attribute
+		$this->mnn_data = $rss_items;
 
-		$this->mnn_data = $remote_data_array[0];
+	}
 
+	/**
+	 * Data render
+	 * Parse the data in $this->mnn_data and turn it into HTML for front end rendering
+	 */
+	private function data_render() {
+
+		// instantiate $output
+		$output = '';
+
+		// see if we have data
+		if ( 0 < count( $this->mnn_data ) ) {
+
+			// start an unordered list
+			$output .= '<ul>' . "\n";
+
+			// Loop through each feed item and display each item as a hyperlink.
+			foreach ( $this->mnn_data as $item ) {
+
+				$output .= '<li>' . "\n";
+
+					// start the link
+					$output .= '<a href="' . esc_url( $item->get_permalink() ) . '"' . "\n";
+
+						// make the title attribute in the link
+						$output .= 'title="' . sprintf( __( 'Posted %s', 'mnn-headlines-widget' ), $item->get_date( 'j F Y' ) ) . '">' . "\n";
+
+						// print the news headline
+						$output .= esc_html( $item->get_title() ) . "\n";
+
+					// end the link
+					$output .= '</a>' . "\n";
+
+				$output .= '</li>' . "\n";
+
+			}
+
+			$output .= '</ul>' . "\n\n";
+
+		}
+
+		return $output;
 	}
 
 	/**
@@ -76,52 +124,25 @@ class MNN_Headlines_Widget extends WP_Widget {
 	 */
 	public function widget( $args, $instance ) {
 
-		$title  = apply_filters( 'widget_title', $instance['title'] );
-
+		// instantiate $output
 		$output = '';
 
-		//$output .= '<img src="' . esc_url( $this->mnn_data->PeopleGroupPhotoURL ) . '" />';
+		// filter the title
+		$title	= apply_filters( 'widget_title', $instance['title'] );
 
-		$output  .= '<ul>' . "\n";
-			$output .= '<li class="image"><a href="' . esc_url( $this->mnn_data->PeopleGroupURL ) . '">' . $this->mnn_data->PeopNameInCountry . '</a>, in <a href="' . $this->mnn_data->CountryURL . '">' . $this->mnn_data->Ctry . '</a></li>';
-			$output .= '<li class="population"><span>Population:</span> ' . number_format( absint( $this->mnn_data->Population ) ) . '</li>';
-			$output .= '<li class="language"><span>Language:</span> ' . $this->mnn_data->PrimaryLanguageName . '</li>';
-			$output .= '<li class="religion"><span>Religion:</span> ' . $this->mnn_data->PrimaryReligion . '</li>';
-			$output .= '<li class="status"><span>Status:</span> ' . $this->mnn_data->JPScaleText . '</li>';
-		$output  .= '</ul>' . "\n";
+		// go get the news
+		$output .= $this->data_render();
 
-		$output .= '<p>Data from the <a href="http://www.joshuaproject.net/" target="_new">Joshua Project</a></p>' . "\n";
-
+		// echo the widget title
 		echo wp_kses_post( $args['before_widget'] );
 		if ( ! empty( $title ) )
 		echo wp_kses_post( $args['before_title'] ) . esc_html( $title ) . wp_kses_post( $args['after_title'] );
+
+		// echo the widget content
 		echo wp_kses_post( $output );
+
+		// echo the after_widget html
 		echo wp_kses_post( $args['after_widget'] );
-	}
-
-	/**
-	 * Front-end css for widget.
-	 */
-	public function widget_css() {
-
-		$output = '';
-
-		// make sure we actually have a widget
-		if ( is_active_widget( false, false, $this->id_base, true ) ) {
-
-			// don't show the styles if the filter has them off
-			if ( ! apply_filters( 't1k-jp-unreached-people-styles', true ) ) { return; }
-
-			$output .= '<style type="text/css">' . "\n";
-
-				$output .= '.widget_mnn-headlines-widget img { max-width: 100%; }' . "\n";
-				$output .= '.widget_mnn-headlines-widget ul { list-style-type: none; border-bottom: 1px solid #ccc;}' . "\n";
-
-			$output .= '</style>' . "\n";
-		}
-
-		print $output;
-
 	}
 
 	/**
@@ -133,12 +154,14 @@ class MNN_Headlines_Widget extends WP_Widget {
 	 */
 	public function form( $instance ) {
 
-		if ( isset( $instance[ 'title' ] ) ) {
-			$title = $instance[ 'title' ];
+		// check to see if we have a title, and if so, set it
+		if ( isset( $instance['title'] ) ) {
+			$title = $instance['title'];
 		} else {
 			$title = '';
 		}
 
+		// make the form for the title field in the admin
 		?>
 		<p>
 			<label for="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>"><?php _e( 'Title:' ); ?></label>
@@ -159,8 +182,11 @@ class MNN_Headlines_Widget extends WP_Widget {
 	 * @return array Updated safe values to be saved.
 	 */
 	public function update( $new_instance, $old_instance ) {
+
+		// set up current instance to hold old_instance data
 		$instance = $old_instance;
 
+		// set instance to hold new instance data
 		$instance['title'] = ( ! empty( $new_instance['title'] ) ) ? strip_tags( $new_instance['title'] ) : '';
 
 		return $instance;

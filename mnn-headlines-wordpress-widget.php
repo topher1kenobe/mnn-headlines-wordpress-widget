@@ -26,7 +26,7 @@ class MNN_Headlines_Widget extends WP_Widget {
 	 * Make some vars
 	 */
 	private $mnn_data_url  = NULL;
-	private $mnn_data	   = NULL;
+	private $mnn_data      = NULL;
 
 	/**
 	 * Register widget with WordPress.

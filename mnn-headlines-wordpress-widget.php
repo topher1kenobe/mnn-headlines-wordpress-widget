@@ -13,25 +13,47 @@ License: GPL
  * Provides a WordPress widget that renders recent daily headline from Mission Network News
  *
  * @package MNN_Headlines_Widget
- * @since MNN_Headlines_Widget 1.0
- * @author Topher
+ * @since   MNN_Headlines_Widget 1.0
+ * @author  Topher
  */
 
 /**
  * Adds MNN_Headlines_Widget widget.
+ *
+ * @class   MNN_Headlines_Widget
+ * @version 1.0.0
+ * @since   1.0
+ * @package MNN_Headlines_Widget
+ * @author  Topher
  */
 class MNN_Headlines_Widget extends WP_Widget {
 
 	/**
-	 * Make some vars
-	 */
-	private $mnn_data_url  = NULL;
-	private $mnn_data      = NULL;
+	* Holds the source URL for the data
+	*
+	* @access private
+	* @since  1.0
+	* @var    string
+	*/
+	private $mnn_data_url = NULL;
 
 	/**
-	 * Register widget with WordPress.
-	 */
-	function __construct() {
+	* Holds the data retrieved from the remote server
+	*
+	* @access private
+	* @since  1.0
+	* @var    object
+	*/
+	private $mnn_data = NULL;
+
+	/**
+	* MNN_Headlines_Widget Constructor, sets up Widget, gets data
+	*
+	* @access public
+	* @since  1.0
+	* @return void
+	*/
+	public function __construct() {
 
 		//  Build out the widget details
 		parent::__construct(
@@ -49,8 +71,14 @@ class MNN_Headlines_Widget extends WP_Widget {
 	}
 
 	/**
-	 * Data fetcher
-	 */
+	* Data fetcher
+	*
+	* Runs at instantiation, gets data from remote server.  Caching built in.
+	*
+	* @access private
+	* @since  1.0
+	* @return void
+	*/
 	private function data_fetcher() {
 
 		$rss = fetch_feed( $this->mnn_data_url );
@@ -72,9 +100,14 @@ class MNN_Headlines_Widget extends WP_Widget {
 	}
 
 	/**
-	 * Data render
-	 * Parse the data in $this->mnn_data and turn it into HTML for front end rendering
-	 */
+	* Data render
+	*
+	* Parse the data in $this->mnn_data and turn it into HTML for front end rendering
+	*
+	* @access private
+	* @since  1.0
+	* @return string
+	*/
 	private function data_render() {
 
 		// instantiate $output
@@ -117,7 +150,7 @@ class MNN_Headlines_Widget extends WP_Widget {
 	/**
 	 * Front-end display of widget.
 	 *
-	 * @see WP_Widget::widget()
+	 * @see   WP_Widget::widget()
 	 *
 	 * @param array $args	  Widget arguments.
 	 * @param array $instance Saved values from database.
@@ -148,7 +181,7 @@ class MNN_Headlines_Widget extends WP_Widget {
 	/**
 	 * Back-end widget form.
 	 *
-	 * @see WP_Widget::form()
+	 * @see   WP_Widget::form()
 	 *
 	 * @param array $instance Previously saved values from database.
 	 */
@@ -174,10 +207,10 @@ class MNN_Headlines_Widget extends WP_Widget {
 	/**
 	 * Sanitize widget form values as they are saved.
 	 *
-	 * @see WP_Widget::update()
+	 * @see    WP_Widget::update()
 	 *
-	 * @param array $new_instance Values just sent to be saved.
-	 * @param array $old_instance Previously saved values from database.
+	 * @param  array $new_instance Values just sent to be saved.
+	 * @param  array $old_instance Previously saved values from database.
 	 *
 	 * @return array Updated safe values to be saved.
 	 */
